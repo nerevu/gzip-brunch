@@ -28,6 +28,10 @@ module.exports = class Gzip
         path: @_joinToPublic @options.paths?.root or ''
         ext:  /\.ico$/
       }
+      {
+        path: @_joinToPublic @options.paths?.root or ''
+        ext:  /\.xml$/
+      }      
     ]
 
   onCompile: (generatedFiles) ->
