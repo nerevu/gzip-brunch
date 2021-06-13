@@ -1,3 +1,6 @@
+expect = require('chai').expect
+Plugin = require('../src/index')
+
 describe "Plugin", ->
   beforeEach ->
     @plugin = new Plugin
@@ -7,7 +10,7 @@ describe "Plugin", ->
   it "should be an object", ->
     expect(@plugin).to.be.ok
 
-  it "should has #onCompile method", ->
+  it "should have onCompile method", ->
     expect(@plugin.onCompile).to.be.an.instanceof(Function)
 
   describe 'constructor', ->

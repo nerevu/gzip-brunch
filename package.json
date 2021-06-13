@@ -11,11 +11,16 @@
   "main": "./lib/index",
   "scripts": {
     "prepare": "rm -rf lib && coffee --bare --output lib/ src/",
-    "test": "node_modules/.bin/mocha"
+    "watch": "coffee -wo lib/ src/",
+    "mocha": "mocha --require coffeescript/register test/**/*.coffee",
+    "cover": "nyc report --reporter=text-lcov --reporter=text-summary",
+    "test": "npm run mocha && npm run cover"
   },
   "devDependencies": {
-    "mocha": "1.13.0",
-    "chai": "1.8.0",
-    "coffee-script": "latest"
+    "chai": "^3.3.0",
+    "coffee-coverage": "^3.0.0",
+    "coffeescript": "^2.4.1",
+    "mocha": "^8.4.0",
+    "nyc": "^15.0.0"
   }
 }
