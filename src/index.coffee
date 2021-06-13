@@ -2,11 +2,16 @@ fs      = require 'fs'
 zlib    = require 'zlib'
 sysPath = require 'path'
 
+textExts = [/\.html$/, /\.js$/, /\.css$/, /\.svg$/, /\.xml$/]
+CONSTANTS = zlib.constants
+
 module.exports = class Gzip
   brunchPlugin: yes
 
   constructor: (@config) ->
     @options = @config?.plugins?.gzip ? {}
+    @options.brotli = @options.brotli ? {}
+
     @targets = [
       {
         path: @config.paths.public
@@ -43,24 +48,52 @@ module.exports = class Gzip
       fileList = fs.readdirSync target.path
       fileList.forEach (file) =>
         if file.match target.ext
-          @_compress target.path, file
+          @_gzip target.path, file
 
-  _compress: (path, file) ->
-    gzip   = zlib.createGzip level: zlib.Z_BEST_COMPRESSION
-    input_path = "#{path}/#{file}"
-    output_path = "#{path}/#{file}.gz"
-    input  = fs.createReadStream input_path
-    output = fs.createWriteStream output_path
+          if @options.brotli.enable
+            @_brotli target.path, file
 
-    input.pipe(gzip).pipe output
+  _compress: (inputPath, outputPath, compressor, options) ->
+    input  = fs.createReadStream inputPath
+    output = fs.createWriteStream outputPath
+
+    input.pipe(compressor).pipe output
 
     # Delete the original file generated
-    if !!@options.removeOriginalFiles and fs.existsSync(input_path)
-      fs.unlinkSync input_path
+    if !!options.removeOriginalFiles and fs.existsSync(inputPath)
+      fs.unlinkSync inputPath
 
-    # Rename gzip files to original files
-    if !!@options.renameGzipFilesToOriginalFiles and fs.existsSync(input_path)
-      fs.renameSync output_path, input_path
+    # Rename compressed files to original files
+    if !!options.renameFilesToOriginalFiles and fs.existsSync(inputPath)
+      fs.renameSync outputPath, inputPath
+
+  _gzip: (path, file) =>
+    gzip = zlib.createGzip
+      level: @options.quality or zlib.Z_BEST_COMPRESSION
+
+    options =
+      removeOriginalFiles: @options.removeOriginalFiles
+      renameFilesToOriginalFiles: @options.renameGzipFilesToOriginalFiles
+
+    @_compress "#{path}/#{file}", "#{path}/#{file}.gz", gzip, options
+
+  _brotli: (path, file) =>
+    inputPath = "#{path}/#{file}"
+    isText = textExts.some (ext) -> file.match ext
+    brotliMode = if isText then 'BROTLI_MODE_TEXT' else 'BROTLI_MODE_GENERIC'
+    quality = @options.brotli.quality or CONSTANTS.BROTLI_MAX_QUALITY
+
+    brotli = zlib.createBrotliCompress
+      params:
+        [CONSTANTS.BROTLI_PARAM_MODE]: CONSTANTS[brotliMode]
+        [CONSTANTS.BROTLI_PARAM_QUALITY]: quality
+        [CONSTANTS.BROTLI_PARAM_SIZE_HINT]: fs.statSync(inputPath).size
+
+    options =
+      removeOriginalFiles: @options.removeOriginalFiles
+      renameFilesToOriginalFiles: @options.renameBrotliFilesToOriginalFiles
+
+    @_compress inputPath, "#{path}/#{file}.br", brotli, options
 
   _joinToPublic: (path) =>
     sysPath.join @config.paths.public, path
