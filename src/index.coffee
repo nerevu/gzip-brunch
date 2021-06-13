@@ -10,28 +10,28 @@ module.exports = class Gzip
     @targets = [
       {
         path: @config.paths.public
-        ext:  /\.html$/
+        ext: /\.html$/
       }
       {
         path: @_joinToPublic @options.paths?.javascript or 'javascripts'
-        ext:  /\.js$/
+        ext: /\.js$/
       }
       {
         path: @_joinToPublic @options.paths?.stylesheet or 'stylesheets'
-        ext:  /\.css$/
+        ext: /\.css$/
       }
       {
         path: @_joinToPublic @options.paths?.image or 'images'
-        ext:  /\.svg$/
+        ext: /\.svg$/
       }
       {
         path: @_joinToPublic @options.paths?.root or ''
-        ext:  /\.ico$/
+        ext: /\.ico$/
       }
       {
         path: @_joinToPublic @options.paths?.root or ''
-        ext:  /\.xml$/
-      }      
+        ext: /\.xml$/
+      }
     ]
 
   onCompile: (generatedFiles) ->
